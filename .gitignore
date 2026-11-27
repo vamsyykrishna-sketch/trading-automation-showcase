@@ -221,3 +221,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Showcase safety rules ---
+.env
+*.env
+!config/.env.example
+*.pem
+*.key
+*token*.json
+*credentials*
+*secret*
+logs/
+*.log
+*.csv
+*.db
+*.sqlite
