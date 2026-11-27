@@ -1,0 +1,12 @@
+# Sends a Telegram alert that unit %i failed. Hooked up via OnFailure= in
+# every monitored unit. Uses the stdlib-only alerter so it still works when
+# the bots' own environment is broken.
+[Unit]
+Description=Telegram alert: %i has failed
+
+[Service]
+Type=oneshot
+User=trader
+WorkingDirectory=/opt/trading-bot
+EnvironmentFile=/opt/trading-bot/config/.env
+ExecStart=/usr/bin/python3 -m src.alerts.telegram %i

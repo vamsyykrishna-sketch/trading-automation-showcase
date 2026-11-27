@@ -1,0 +1,31 @@
+# One trading bot per instance: tradingbot@<script>.service runs src/bots/<script>.py
+# in its OWN cgroup, so restarting the scheduler, a watchdog or any other unit can
+# never kill a running bot (and a bot can't kill them).
+#
+# Started only by its timer (tradingbot-start@<script>.timer). A bot that needs
+# different settings gets a drop-in (tradingbot@<script>.service.d/override.conf),
+# never a copy of this file.
+#
+# Exit codes carry meaning: a normal end (done for the day, weekend, holiday,
+# outside hours, another copy already holds the instance lock) exits 0 and is
+# NOT restarted; a crash exits non-zero and IS restarted.
+[Unit]
+Description=Trading bot %i
+After=network-online.target
+Wants=network-online.target
+# At most 3 starts in 12h, then the unit stays failed and OnFailure alerts.
+StartLimitIntervalSec=12h
+StartLimitBurst=3
+OnFailure=alert-telegram@%p-%i.service
+
+[Service]
+Type=simple
+User=trader
+WorkingDirectory=/opt/trading-bot
+EnvironmentFile=/opt/trading-bot/config/.env
+ExecStart=/opt/trading-bot/.venv/bin/python -u -m src.bots.%i
+Restart=on-failure
+RestartSec=30
+# Logs on disk (not /tmp) so they survive the nightly server shutdown.
+StandardOutput=append:/opt/trading-bot/logs/%i.log
+StandardError=inherit

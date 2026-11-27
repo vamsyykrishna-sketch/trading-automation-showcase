@@ -1,0 +1,17 @@
+# Starts tradingbot@<instance>.service on that bot's own schedule. The schedule
+# lives in a per-bot drop-in (tradingbot-start@<instance>.timer.d/schedule.conf).
+# A timer without that drop-in has no trigger and refuses to start.
+# Fires every weekday; the bot itself exits 0 on exchange holidays.
+[Unit]
+Description=Start trading bot %i on schedule
+
+[Timer]
+Unit=tradingbot@%i.service
+# Fire on the minute (systemd's default accuracy can be up to a minute late).
+AccuracySec=1s
+# A start missed while the server was off is NOT run late at boot:
+# a late start could place orders at the wrong time of day.
+Persistent=false
+
+[Install]
+WantedBy=timers.target

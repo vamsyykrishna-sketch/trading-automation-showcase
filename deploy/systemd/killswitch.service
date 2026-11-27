@@ -1,0 +1,22 @@
+# Independent kill switch: always running during market hours, restarted on any exit.
+[Unit]
+Description=Live kill switch - broker-side loss limit
+After=network-online.target
+Wants=network-online.target
+OnFailure=alert-telegram@%n.service
+
+[Service]
+Type=simple
+User=trader
+WorkingDirectory=/opt/trading-bot
+EnvironmentFile=/opt/trading-bot/config/.env
+ExecStart=/opt/trading-bot/.venv/bin/python -u -m src.risk.kill_switch
+Restart=always
+RestartSec=30
+# OnFailure= fires only once systemd gives up restarting, which RestartSec=30
+# never reaches. So ALSO alert on every abnormal exit. A clean stop has
+# SERVICE_RESULT=success and stays quiet.
+ExecStopPost=/bin/sh -c 'if [ "$$SERVICE_RESULT" != "success" ]; then /opt/trading-bot/.venv/bin/python -m src.alerts.telegram %n; fi'
+
+[Install]
+WantedBy=multi-user.target
